@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreelanceHub Afrique</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --accent: #1D9E75;
+    --accent-light: #E1F5EE;
+    --accent-dark: #085041;
+    --bg: #F7F7F5;
+    --surface: #FFFFFF;
+    --border: rgba(0,0,0,0.08);
+    --text: #1a1a18;
+    --muted: #6b6b68;
+    --danger: #E24B4A;
+    --warning: #BA7517;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
+
+  /* SIDEBAR */
+  .sidebar { width: 230px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+  .logo { padding: 1.5rem 1.25rem 1rem; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+  .logo-icon { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; font-weight: 600; }
+  .logo-text { font-size: 15px; font-weight: 600; color: var(--text); }
+  .logo-sub { font-size: 11px; color: var(--muted); }
+  nav { padding: 0.75rem 0; flex: 1; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 1.25rem; font-size: 13.5px; color: var(--muted); cursor: pointer; transition: all 0.15s; border-left: 2.5px solid transparent; }
+  .nav-item:hover { background: var(--bg); color: var(--text); }
+  .nav-item.active { background: var(--accent-light); color: var(--accent-dark); border-left-color: var(--accent); font-weight: 500; }
+  .nav-icon { font-size: 17px; width: 20px; text-align: center; }
+  .sidebar-footer { padding: 1rem 1.25rem; border-top: 1px solid var(--border); }
+  .plan-free { display: inline-block; font-size: 10px; font-family: 'DM Mono', monospace; background: var(--accent-light); color: var(--accent-dark); padding: 2px 8px; border-radius: 20px; margin-top: 4px; }
+
+  /* MAIN */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0.85rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .topbar h1 { font-size: 15px; font-weight: 600; }
+  .content { flex: 1; overflow-y: auto; padding: 1.5rem; }
+
+  /* BUTTONS */
+  .btn { background: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 500; transition: background 0.15s; }
+  .btn:hover { background: var(--accent-dark); }
+  .btn-sm { padding: 5px 11px; font-size: 12px; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--bg); color: var(--text); }
+  .btn-danger { background: var(--danger); }
+  .btn-danger:hover { background: #a32d2d; }
+
+  /* CARDS */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+  .card-title { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1rem; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+  .stat-label { font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+  .stat-value { font-size: 22px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
+  .stat-sub { font-size: 11px; color: var(--accent); margin-top: 3px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+  /* ROWS */
+  .row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .row:last-child { border-bottom: none; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; font-family: 'DM Mono', monospace; }
+  .av-green { background: #E1F5EE; color: #085041; }
+  .av-blue { background: #E6F1FB; color: #0C447C; }
+  .av-amber { background: #FAEEDA; color: #633806; }
+  .av-coral { background: #FAECE7; color: #712B13; }
+  .row-info { flex: 1; min-width: 0; }
+  .row-name { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-sub { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-amount { font-size: 13px; font-weight: 600; color: var(--accent-dark); font-family: 'DM Mono', monospace; white-space: nowrap; }
+
+  /* BADGES */
+  .badge { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+  .b-green { background: #E1F5EE; color: #085041; }
+  .b-amber { background: #FAEEDA; color: #633806; }
+  .b-blue { background: #E6F1FB; color: #0C447C; }
+  .b-red { background: #FCEBEB; color: #791F1F; }
+
+  /* PROGRESS */
+  .progress-bar { height: 4px; background: var(--bg); border-radius: 2px; overflow: hidden; margin: 5px 0; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; }
+  .progress-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 14px; padding: 1.5rem; width: 460px; max-width: 95vw; }
+  .modal-title { font-size: 15px; font-weight: 600; margin-bottom: 1.25rem; }
+  .form-group { margin-bottom: 12px; }
+  .form-group label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 500; }
+  .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); outline: none; transition: border 0.15s; }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); background: white; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--text); color: white; padding: 10px 16px; border-radius: 8px; font-size: 13px; z-index: 200; transform: translateY(100px); opacity: 0; transition: all 0.3s; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* LOADING */
+  .loading { text-align: center; padding: 2rem; color: var(--muted); font-size: 13px; }
+  .empty { text-align: center; padding: 2rem; color: var(--muted); font-size: 13px; }
+  .empty-icon { font-size: 28px; margin-bottom: 8px; }
+
+  /* BANNER */
+  .banner { background: var(--accent-light); border: 1px solid #9FE1CB; border-radius: 10px; padding: 10px 14px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .banner p { font-size: 12px; color: var(--accent-dark); }
+  .banner strong { font-weight: 600; }
+
+  /* DELETE BTN */
+  .del-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 15px; padding: 4px; border-radius: 4px; transition: color 0.15s; }
+  .del-btn:hover { color: var(--danger); }
+
+  /* INVOICE ROW */
+  .inv-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .inv-row:last-child { border-bottom: none; }
+  .inv-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); width: 80px; flex-shrink: 0; }
+  .inv-client { flex: 1; font-weight: 500; }
+  .inv-amount { font-family: 'DM Mono', monospace; font-weight: 600; color: var(--accent-dark); }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">F</div>
+    <div>
+      <div class="logo-text">FreelanceHub</div>
+      <div class="logo-sub">Afrique</div>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-item active" onclick="showPage('dashboard', this)">
+      <span class="nav-icon">📊</span> Tableau de bord
+    </div>
+    <div class="nav-item" onclick="showPage('clients', this)">
+      <span class="nav-icon">👥</span> Clients
+    </div>
+    <div class="nav-item" onclick="showPage('projets', this)">
+      <span class="nav-icon">💼</span> Projets
+    </div>
+    <div class="nav-item" onclick="showPage('factures', this)">
+      <span class="nav-icon">🧾</span> Factures
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div style="font-size:13px; font-weight:500;">Mon compte</div>
+    <div class="plan-free">Plan Gratuit · 3 clients max</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- DASHBOARD -->
+  <div id="page-dashboard" class="page active">
+    <div class="topbar">
+      <h1>Tableau de bord</h1>
+      <button class="btn" onclick="openModal('client')">+ Nouveau client</button>
+    </div>
+    <div class="content">
+      <div class="banner">
+        <p><strong>Plan Gratuit :</strong> 3 clients max. Passe à Premium pour des clients illimités + rappels WhatsApp.</p>
+        <button class="btn btn-sm">Premium · 2 000 FCFA/mois</button>
+      </div>
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-label">Clients actifs</div><div class="stat-value" id="stat-clients">—</div></div>
+        <div class="stat-card"><div class="stat-label">Projets actifs</div><div class="stat-value" id="stat-projets">—</div></div>
+        <div class="stat-card"><div class="stat-label">Factures en attente</div><div class="stat-value" id="stat-factures">—</div></div>
+        <div class="stat-card"><div class="stat-label">Total à recevoir</div><div class="stat-value" id="stat-montant">—</div><div class="stat-sub">FCFA</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Derniers clients</div>
+          <div id="dash-clients"><div class="loading">Chargement...</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Projets en cours</div>
+          <div id="dash-projets"><div class="loading">Chargement...</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLIENTS -->
+  <div id="page-clients" class="page">
+    <div class="topbar">
+      <h1>Clients</h1>
+      <button class="btn" onclick="openModal('client')">+ Ajouter un client</button>
+    </div>
+    <div class="content">
+      <div class="card">
+        <div class="card-title" id="clients-title">Mes clients</div>
+        <div id="clients-list"><div class="loading">Chargement...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROJETS -->
+  <div id="page-projets" class="page">
+    <div class="topbar">
+      <h1>Projets</h1>
+      <button class="btn" onclick="openModal('projet')">+ Nouveau projet</button>
+    </div>
+    <div class="content">
+      <div class="card">
+        <div class="card-title">Tous les projets</div>
+        <div id="projets-list"><div class="loading">Chargement...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FACTURES -->
+  <div id="page-factures" class="page">
+    <div class="topbar">
+      <h1>Factures</h1>
+      <button class="btn" onclick="openModal('facture')">+ Créer une facture</button>
+    </div>
+    <div class="content">
+      <div class="grid-2" style="margin-bottom:1rem;">
+        <div class="stat-card"><div class="stat-label">Total facturé</div><div class="stat-value" id="f-total">—</div><div class="stat-sub">FCFA</div></div>
+        <div class="stat-card"><div class="stat-label">En attente</div><div class="stat-value" id="f-attente">—</div><div class="stat-sub">FCFA</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Historique</div>
+        <div id="factures-list"><div class="loading">Chargement...</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModalOut(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Nouveau client</div>
+    <div id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+      <button class="btn" id="modal-save" onclick="saveModal()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://vjxbedqmoggruiutwghr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable__xmlF88vSLH53HCBAu_fZw_NAFAQUlR';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const avatarColors = ['av-green','av-blue','av-amber','av-coral'];
+let currentModal = null;
+let allClients = [];
+
+function initials(nom) {
+  return nom.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+}
+function avatarColor(i) { return avatarColors[i % avatarColors.length]; }
+function fmtMoney(n) { return Number(n).toLocaleString('fr-FR'); }
+function fmtDate(d) { if(!d) return '—'; return new Date(d).toLocaleDateString('fr-FR'); }
+
+function toast(msg, ok=true) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = ok ? '#1a1a18' : '#E24B4A';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  if(id==='dashboard') loadDashboard();
+  if(id==='clients') loadClients();
+  if(id==='projets') loadProjets();
+  if(id==='factures') loadFactures();
+}
+
+// ─── LOAD DATA ───────────────────────────────────────────
+
+async function loadDashboard() {
+  const [{ data: clients }, { data: projets }, { data: factures }] = await Promise.all([
+    db.from('clients').select('*').order('created_at', {ascending: false}),
+    db.from('projets').select('*, clients(nom)').eq('statut','actif'),
+    db.from('factures').select('*, clients(nom)').eq('statut','en_attente')
+  ]);
+  allClients = clients || [];
+
+  document.getElementById('stat-clients').textContent = (clients||[]).length;
+  document.getElementById('stat-projets').textContent = (projets||[]).length;
+  document.getElementById('stat-factures').textContent = (factures||[]).length;
+  const total = (factures||[]).reduce((s,f)=>s+Number(f.montant),0);
+  document.getElementById('stat-montant').textContent = fmtMoney(total);
+
+  const dc = document.getElementById('dash-clients');
+  if (!clients || clients.length===0) { dc.innerHTML = '<div class="empty"><div class="empty-icon">👥</div>Aucun client encore</div>'; }
+  else {
+    dc.innerHTML = clients.slice(0,4).map((c,i)=>`
+      <div class="row">
+        <div class="avatar ${avatarColor(i)}">${initials(c.nom)}</div>
+        <div class="row-info"><div class="row-name">${c.nom}</div><div class="row-sub">${c.email||c.telephone||'—'}</div></div>
+      </div>`).join('');
+  }
+
+  const dp = document.getElementById('dash-projets');
+  if (!projets || projets.length===0) { dp.innerHTML = '<div class="empty"><div class="empty-icon">💼</div>Aucun projet actif</div>'; }
+  else {
+    dp.innerHTML = projets.slice(0,4).map(p=>`
+      <div style="padding:8px 0; border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-size:13px;font-weight:500;">${p.nom}</span>
+          <span class="badge b-green">Actif</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">${p.clients?.nom||'—'} · Deadline : ${fmtDate(p.deadline)}</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${p.progression||0}%"></div></div>
+        <div class="progress-labels"><span>${p.progression||0}%</span></div>
+      </div>`).join('');
+  }
+}
+
+async function loadClients() {
+  const { data, error } = await db.from('clients').select('*').order('created_at',{ascending:false});
+  allClients = data || [];
+  const el = document.getElementById('clients-list');
+  const title = document.getElementById('clients-title');
+  title.textContent = `Mes clients (${allClients.length}/3 — Plan gratuit)`;
+  if(error || allClients.length===0) { el.innerHTML='<div class="empty"><div class="empty-icon">👥</div>Aucun client. Ajoutes-en un !</div>'; return; }
+  el.innerHTML = allClients.map((c,i)=>`
+    <div class="row">
+      <div class="avatar ${avatarColor(i)}">${initials(c.nom)}</div>
+      <div class="row-info">
+        <div class="row-name">${c.nom}</div>
+        <div class="row-sub">${[c.email,c.telephone,c.domaine].filter(Boolean).join(' · ')}</div>
+      </div>
+      <button class="del-btn" onclick="deleteClient('${c.id}','${c.nom}')" title="Supprimer">🗑</button>
+    </div>`).join('');
+}
+
+async function loadProjets() {
+  const { data, error } = await db.from('projets').select('*, clients(nom)').order('created_at',{ascending:false});
+  const el = document.getElementById('projets-list');
+  if(error || !data || data.length===0) { el.innerHTML='<div class="empty"><div class="empty-icon">💼</div>Aucun projet. Crées-en un !</div>'; return; }
+  const badgeMap = { actif:'b-green', termine:'b-blue', en_attente:'b-amber' };
+  const labelMap = { actif:'Actif', termine:'Terminé', en_attente:'En attente' };
+  el.innerHTML = data.map(p=>`
+    <div style="padding:12px 0; border-bottom:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <span style="font-size:13px;font-weight:500;">${p.nom}</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="badge ${badgeMap[p.statut]||'b-amber'}">${labelMap[p.statut]||p.statut}</span>
+          <button class="del-btn" onclick="deleteProjet('${p.id}')" title="Supprimer">🗑</button>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">
+        Client : ${p.clients?.nom||'—'} · Budget : ${p.budget?fmtMoney(p.budget)+' FCFA':'—'} · Deadline : ${fmtDate(p.deadline)}
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${p.progression||0}%"></div></div>
+      <div class="progress-labels"><span>${p.progression||0}% complété</span></div>
+    </div>`).join('');
+}
+
+async function loadFactures() {
+  const { data, error } = await db.from('factures').select('*, clients(nom)').order('created_at',{ascending:false});
+  const el = document.getElementById('factures-list');
+  if(error || !data || data.length===0) { el.innerHTML='<div class="empty"><div class="empty-icon">🧾</div>Aucune facture. Crées-en une !</div>'; return; }
+  const total = data.reduce((s,f)=>s+Number(f.montant),0);
+  const attente = data.filter(f=>f.statut==='en_attente').reduce((s,f)=>s+Number(f.montant),0);
+  document.getElementById('f-total').textContent = fmtMoney(total);
+  document.getElementById('f-attente').textContent = fmtMoney(attente);
+  const badgeMap = { en_attente:'b-amber', payee:'b-green', annulee:'b-red' };
+  const labelMap = { en_attente:'En attente', payee:'Payée', annulee:'Annulée' };
+  el.innerHTML = data.map((f,i)=>`
+    <div class="inv-row">
+      <span class="inv-num">#FAC-${String(i+1).padStart(3,'0')}</span>
+      <span class="inv-client">${f.clients?.nom||'—'}</span>
+      <span style="font-size:11px;color:var(--muted);">${fmtDate(f.created_at)}</span>
+      <span class="inv-amount">${fmtMoney(f.montant)} F</span>
+      <span class="badge ${badgeMap[f.statut]||'b-amber'}">${labelMap[f.statut]||f.statut}</span>
+      <button class="del-btn" onclick="deleteFacture('${f.id}')" title="Supprimer">🗑</button>
+    </div>`).join('');
+}
+
+// ─── MODALS ───────────────────────────────────────────────
+
+function openModal(type) {
+  currentModal = type;
+  const clientOptions = allClients.map(c=>`<option value="${c.id}">${c.nom}</option>`).join('');
+  const forms = {
+    client: {
+      title: 'Nouveau client',
+      body: `
+        <div class="form-row">
+          <div class="form-group"><label>Nom complet *</label><input id="f-nom" type="text" placeholder="Ex: Ama Koffi" required/></div>
+          <div class="form-group"><label>Email</label><input id="f-email" type="email" placeholder="email@exemple.com"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Téléphone (WhatsApp)</label><input id="f-tel" type="text" placeholder="+228 90 00 00 00"/></div>
+          <div class="form-group"><label>Domaine</label>
+            <select id="f-domaine">
+              <option value="">Choisir...</option>
+              <option>Design graphique</option>
+              <option>Développement web</option>
+              <option>Réseaux sociaux</option>
+              <option>Rédaction</option>
+              <option>Marketing</option>
+              <option>Autre</option>
+            </select>
+          </div>
+        </div>`
+    },
+    projet: {
+      title: 'Nouveau projet',
+      body: `
+        <div class="form-group"><label>Nom du projet *</label><input id="f-nom" type="text" placeholder="Ex: Site vitrine boutique"/></div>
+        <div class="form-row">
+          <div class="form-group"><label>Client *</label><select id="f-client"><option value="">Choisir...</option>${clientOptions}</select></div>
+          <div class="form-group"><label>Budget (FCFA)</label><input id="f-budget" type="number" placeholder="Ex: 150000"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Deadline</label><input id="f-deadline" type="date"/></div>
+          <div class="form-group"><label>Progression (%)</label><input id="f-prog" type="number" min="0" max="100" placeholder="0" value="0"/></div>
+        </div>
+        <div class="form-group"><label>Statut</label>
+          <select id="f-statut">
+            <option value="actif">Actif</option>
+            <option value="en_attente">En attente</option>
+            <option value="termine">Terminé</option>
+          </select>
+        </div>`
+    },
+    facture: {
+      title: 'Créer une facture',
+      body: `
+        <div class="form-row">
+          <div class="form-group"><label>Client *</label><select id="f-client"><option value="">Choisir...</option>${clientOptions}</select></div>
+          <div class="form-group"><label>Montant (FCFA) *</label><input id="f-montant" type="number" placeholder="Ex: 75000"/></div>
+        </div>
+        <div class="form-group"><label>Description</label><input id="f-desc" type="text" placeholder="Ex: Création site web — acompte 50%"/></div>
+        <div class="form-row">
+          <div class="form-group"><label>Date d'échéance</label><input id="f-echeance" type="date"/></div>
+          <div class="form-group"><label>Statut</label>
+            <select id="f-statut">
+              <option value="en_attente">En attente</option>
+              <option value="payee">Payée</option>
+            </select>
+          </div>
+        </div>`
+    }
+  };
+  document.getElementById('modal-title').textContent = forms[type].title;
+  document.getElementById('modal-body').innerHTML = forms[type].body;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); currentModal = null; }
+function closeModalOut(e) { if(e.target === document.getElementById('modal')) closeModal(); }
+
+async function saveModal() {
+  const btn = document.getElementById('modal-save');
+  btn.textContent = 'Enregistrement...';
+  btn.disabled = true;
+
+  try {
+    if(currentModal === 'client') {
+      const nom = document.getElementById('f-nom').value.trim();
+      if(!nom) { toast('Le nom est obligatoire', false); return; }
+      if(allClients.length >= 3) { toast('Limite de 3 clients atteinte (plan gratuit)', false); return; }
+      const { error } = await db.from('clients').insert([{
+        nom,
+        email: document.getElementById('f-email').value.trim() || null,
+        telephone: document.getElementById('f-tel').value.trim() || null,
+        domaine: document.getElementById('f-domaine').value || null,
+      }]);
+      if(error) throw error;
+      toast('Client ajouté ✓');
+    }
+
+    else if(currentModal === 'projet') {
+      const nom = document.getElementById('f-nom').value.trim();
+      const client_id = document.getElementById('f-client').value;
+      if(!nom || !client_id) { toast('Nom et client obligatoires', false); return; }
+      const { error } = await db.from('projets').insert([{
+        nom,
+        client_id,
+        budget: parseInt(document.getElementById('f-budget').value) || null,
+        deadline: document.getElementById('f-deadline').value || null,
+        progression: parseInt(document.getElementById('f-prog').value) || 0,
+        statut: document.getElementById('f-statut').value,
+      }]);
+      if(error) throw error;
+      toast('Projet ajouté ✓');
+    }
+
+    else if(currentModal === 'facture') {
+      const client_id = document.getElementById('f-client').value;
+      const montant = parseInt(document.getElementById('f-montant').value);
+      if(!client_id || !montant) { toast('Client et montant obligatoires', false); return; }
+      const { error } = await db.from('factures').insert([{
+        client_id,
+        montant,
+        description: document.getElementById('f-desc').value.trim() || null,
+        echeance: document.getElementById('f-echeance').value || null,
+        statut: document.getElementById('f-statut').value,
+      }]);
+      if(error) throw error;
+      toast('Facture créée ✓');
+    }
+
+    closeModal();
+    const active = document.querySelector('.nav-item.active');
+    const page = active?.textContent?.trim();
+    if(page?.includes('bord')) loadDashboard();
+    else if(page?.includes('Client')) loadClients();
+    else if(page?.includes('Projet')) loadProjets();
+    else if(page?.includes('Facture')) loadFactures();
+    loadDashboard();
+
+  } catch(err) {
+    toast('Erreur : ' + err.message, false);
+  } finally {
+    btn.textContent = 'Enregistrer';
+    btn.disabled = false;
+  }
+}
+
+// ─── DELETE ───────────────────────────────────────────────
+async function deleteClient(id, nom) {
+  if(!confirm(`Supprimer le client "${nom}" ?`)) return;
+  const { error } = await db.from('clients').delete().eq('id', id);
+  if(error) { toast('Erreur : ' + error.message, false); return; }
+  toast('Client supprimé');
+  loadClients(); loadDashboard();
+}
+async function deleteProjet(id) {
+  if(!confirm('Supprimer ce projet ?')) return;
+  const { error } = await db.from('projets').delete().eq('id', id);
+  if(error) { toast('Erreur : ' + error.message, false); return; }
+  toast('Projet supprimé');
+  loadProjets(); loadDashboard();
+}
+async function deleteFacture(id) {
+  if(!confirm('Supprimer cette facture ?')) return;
+  const { error } = await db.from('factures').delete().eq('id', id);
+  if(error) { toast('Erreur : ' + error.message, false); return; }
+  toast('Facture supprimée');
+  loadFactures(); loadDashboard();
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+loadDashboard();
+</script>
+</body>
+</html>
